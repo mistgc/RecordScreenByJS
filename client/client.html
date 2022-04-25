@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <video class="video" width="600px" controls></video>
+	<video class="videopreview" width="200px" controls></video>
+    <button class="record-btn" onclick="startRecording()">record</button>
+	<button class="stop-btn" onclick="stopRecord()">stop</button>
+</body>
+<script>
+	let mediaStream
+	let recorder
+	function startRecording() {
+		navigator.mediaDevices.getDisplayMedia({
+			video: true
+		}).then(stream => {
+			mediaStream = stream
+			startRecord(stream)
+		})
+	}
+	const startRecord = (stream) => {
+		let index = 0
+		recorder = new MediaRecorder(stream)
+		recorder.ondataavailable = e => {
+			upload(e.data, index++)
+		}
+		recorder.start(10000)
+	}
+
+	const stopRecord = () => {
+		recorder.stop()
+	}
+
+	const upload = (data, index) => {
+		let xhr
+		let formdata = new FormData()
+		if(window.XMLHttpRequest) {
+			xhr = new XMLHttpRequest()
+		}else{
+			// code for IE5, IE6.
+			xhr = new ActiveXObject("Microsoft.XMLHTTP")
+		}
+		xhr.open("POST", "/vedioupload", true)
+		//xhr.setRequestHeader("Content-type", "multipart/form-data")
+		formdata.append("filename", "test.webm")
+		formdata.append("index", index)
+		formdata.append("file", data)
+		xhr.send(formdata)
+	}
+</script>
+
+</html>
