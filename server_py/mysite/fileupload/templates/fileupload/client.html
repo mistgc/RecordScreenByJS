@@ -1,0 +1,118 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+<style>
+	.videopreviewbox {
+		text-align: center;
+		margin-top:10%;
+	}
+	.videopreview {
+		margin-top:10px;
+		background-color:black;
+	}
+	.btnbox {
+		margin: 10px;
+	}
+	.record-btn, .stop-btn{
+		margin-right: 10px;
+		margin-left: 10px;
+	}
+	#_id {
+		text-align: center;
+		border-radius: 10px;
+		border: 2px solid black;
+		width: 100px;
+	}
+</style>
+</head>
+<body>
+	<div class="videopreviewbox">
+		<h2>Screen Recording by JS</h2>
+		<p>The website is designed for showing the screen recording effect implemented by JS.</p>
+		preview:<br>
+		<video class="videopreview" width="400px"></video>
+		<div class="btnbox">
+			<button class="record-btn" onclick="startRecording()">Record</button>
+			<button class="stop-btn" onclick="stopRecord()">Stop</button>
+		</div>
+		<section>
+			<label>ID:</label>
+			<input id="_id" type="text", name="id", oninput="value=value.replace(/[^\d]/g, '')">
+			<p>ps: Enter numbers only.</p>
+	</div>
+		</section>
+</body>
+<script>
+	let mediaStream
+	let recorder
+	let flag = false
+	let stu_id = document.querySelector('#_id')
+	async function startRecording() {
+		if (stu_id.value == '') {
+			alert("Please type an ID.")
+			return
+		}
+		if (flag) {
+			alert("Please stop recording first.")
+			return
+		}
+		navigator.mediaDevices.getDisplayMedia({
+			video: true
+		}).then(stream => {
+			flag = true
+			console.log("Record start!")
+			mediaStream = stream
+			startRecord(stream)
+		})
+	}
+	const startRecord = (stream) => {
+		let index = 0
+		// let options = {
+		//	audioBitsPerSecond : 128000,
+		//	videoBitsPerSecond : 2500000,
+		//	mimeType : 'video/mp4'
+		//}
+		// recorder = new MediaRecorder(stream, options)
+		recorder = new MediaRecorder(stream)
+		recorder.ondataavailable = e => {
+			upload(e.data, index++)
+		}
+		recorder.onstop = e => {
+			flag = false
+			console.log("Record stop!")
+		}
+		recorder.start(10000)
+		let videopreview = document.querySelector(".videopreview")
+
+		videopreview.srcObject = mediaStream
+		videopreview.play()
+	}
+	const stopRecord = () => {
+		recorder.stop()
+	}
+	const upload = (data, index) => {
+		let xhr
+		let formdata = new FormData()
+		if(window.XMLHttpRequest) {
+			xhr = new XMLHttpRequest()
+		}else{
+			// code for IE5, IE6.
+			xhr = new ActiveXObject("Microsoft.XMLHTTP")
+		}
+		// xhr.open("POST", "/vedioupload", true)
+		xhr.open("POST", "/upload/file", true)
+		// xhr.setRequestHeader("Content-type", "multipart/form-data")
+		formdata.append('filename', '/video/'+ stu_id.value + '/screen.webm')
+		// formdata.append("filename", "test.webm")
+		formdata.append("index", index)
+		formdata.append("file", data)
+		xhr.send(formdata)
+	}
+</script>
+</html>
